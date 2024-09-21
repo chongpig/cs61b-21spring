@@ -106,10 +106,57 @@ public class Model extends Observable {
      *    value, then the leading two tiles in the direction of motion merge,
      *    and the trailing tile does not.
      * */
+
+    public boolean columnOperation (int c) {
+        int[] a = new int[board.size()];   //an array indicating if it merges.
+        int stopPoint; //indicate the stop point.
+        boolean changed = false;
+        for(int k=0;k< board.size();k++) {  //reset the array.
+            a[k]=0;
+        }
+        for(int i=board.size()-2;i>=0;i--) {  //start from the second row.
+            Tile t = board.tile(c,i);
+            if(t!=null){
+                stopPoint = board.size();// record the tile index to stop moving.
+                for(int j=i+1;j<board.size();j++) {
+                    if (board.tile(c, j) != null) {
+                        stopPoint = j;
+                        break;
+                    }
+                }
+                if (stopPoint< board.size()){  //not moving to the top.
+                    if (a[stopPoint] == 0 && board.tile(c,stopPoint).value()==t.value()){
+                        a[stopPoint]=1;
+                        score+=2*t.value();
+                        board.move(c,stopPoint,t);
+                        changed=true;
+                    }
+                    else {
+                        if(stopPoint>i+1){  //move but not merge
+                            board.move(c,stopPoint-1,t);
+                            changed=true;
+                        }
+                    }
+                }
+                else {//move to the top
+                    board.move(c,stopPoint-1,t);
+                    changed=true;
+                }
+            }
+
+        }
+        return changed;
+    }
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
-
+        board.setViewingPerspective(side);
+        for(int i=0;i<board.size();i++) {
+            boolean  columnChanged = false;
+            columnChanged=columnOperation(i);
+            changed = changed ? changed:columnChanged;
+        }
+        board.setViewingPerspective(Side.NORTH);
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
@@ -137,7 +184,14 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+
+        for(int i=0;i<b.size();i++) {
+            for(int j=0;j<b.size();j++) {
+                if(b.tile(i,j)==null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -147,7 +201,13 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+        for(int i=0;i<b.size();i++) {
+            for(int j=0;j<b.size();j++) {
+                if(b.tile(i,j)!=null && b.tile(i,j).value()==MAX_PIECE) {
+                    return true;
+                }
+            }
+        }// TODO: Fill in this function.
         return false;
     }
 
@@ -158,7 +218,21 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        if (emptySpaceExists(b)){return true;}
+        for(int i=0;i<b.size()-1;i++) {
+            for(int j=0;j<b.size();j++) {
+                if(b.tile(i,j).value()==b.tile(i+1,j).value()) {
+                    return true;
+                }
+            }
+        }
+        for(int i=0;i<b.size();i++) {
+            for(int j=0;j<b.size()-1;j++) {
+                if(b.tile(i,j).value()==b.tile(i,j+1).value()) {
+                    return true;
+                }
+            }
+        }// TODO: Fill in this function.
         return false;
     }
 
